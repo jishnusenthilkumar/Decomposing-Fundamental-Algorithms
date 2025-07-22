@@ -1,7 +1,8 @@
-import os
-import sys
 from qiskit.quantum_info import Operator
 
+
+from .. import qft, to_qiskit
+=======
 sys.path.insert(
     0,
     os.path.abspath(
@@ -10,6 +11,7 @@ sys.path.insert(
 )  # noqa: E402
 
 from qft_native import qft, to_qiskit  # noqa: E402
+
 
 
 def test_qft_produces_circuit(n):
