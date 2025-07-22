@@ -7,7 +7,11 @@ def cp_via_cz(ctrl, tgt, theta):
     n = max(ctrl, tgt) + 1
     qc = QuantumCircuit(n)
     qc.cp(theta, ctrl, tgt)
-    tc = transpile(qc, basis_gates=["rx", "ry", "rz", "cz"], optimization_level=0)
+    tc = transpile(
+        qc,
+        basis_gates=["rx", "ry", "rz", "cz"],
+        optimization_level=0,
+    )
 
     gates = []
     for inst in tc.data:
@@ -24,12 +28,18 @@ def cp_via_cz(ctrl, tgt, theta):
             gates.append(CZ(*qargs))
     return gates
 
+
 def swap_via_cz(a, b):
-    """Return native gate list implementing a SWAP between qubits ``a`` and ``b`` using CZs."""
+    """Return native gate list implementing a SWAP between qubits ``a`` and
+    ``b`` using CZs."""
     n = max(a, b) + 1
     qc = QuantumCircuit(n)
     qc.swap(a, b)
-    tc = transpile(qc, basis_gates=["rx", "ry", "rz", "cz"], optimization_level=0)
+    tc = transpile(
+        qc,
+        basis_gates=["rx", "ry", "rz", "cz"],
+        optimization_level=0,
+    )
     gates = []
     for inst in tc.data:
         name = inst.operation.name
