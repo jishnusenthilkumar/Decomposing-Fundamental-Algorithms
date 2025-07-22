@@ -1,56 +1,37 @@
-from qiskit import QuantumCircuit, transpile
+"""Utility decompositions for CP and SWAP using only native gates."""
+
+from math import pi
+
 from .gates import RX, RY, RZ, CZ
 
 
-def cp_via_cz(ctrl, tgt, theta):
-    """Return native gate list for controlled-phase e^{i theta |11><11|}."""
-    n = max(ctrl, tgt) + 1
-    qc = QuantumCircuit(n)
-    qc.cp(theta, ctrl, tgt)
-    tc = transpile(
-        qc,
-        basis_gates=["rx", "ry", "rz", "cz"],
-        optimization_level=0,
-    )
+def _cnot_via_cz(ctrl: int, tgt: int):
+    """Return gate list for a CX using CZ and single-qubit rotations."""
+    return [
+        RY(tgt, pi / 2),
+        RX(tgt, pi),
+        CZ(ctrl, tgt),
+        RY(tgt, pi / 2),
+        RX(tgt, pi),
+    ]
 
-    gates = []
-    for inst in tc.data:
-        name = inst.operation.name
-        qargs = [tc.find_bit(q).index for q in inst.qubits]
-        params = inst.operation.params
-        if name == "rx":
-            gates.append(RX(qargs[0], params[0]))
-        elif name == "ry":
-            gates.append(RY(qargs[0], params[0]))
-        elif name == "rz":
-            gates.append(RZ(qargs[0], params[0]))
-        elif name == "cz":
-            gates.append(CZ(*qargs))
+
+def cp_via_cz(ctrl: int, tgt: int, theta: float):
+    """Return gate list implementing ``CP(theta)`` using CZ gates."""
+
+    gates = [RZ(ctrl, theta / 2)]
+    gates += _cnot_via_cz(ctrl, tgt)
+    gates.append(RZ(tgt, -theta / 2))
+    gates += _cnot_via_cz(ctrl, tgt)
+    gates.append(RZ(tgt, theta / 2))
     return gates
 
 
-def swap_via_cz(a, b):
-    """Return native gate list implementing a SWAP between qubits ``a`` and
-    ``b`` using CZs."""
-    n = max(a, b) + 1
-    qc = QuantumCircuit(n)
-    qc.swap(a, b)
-    tc = transpile(
-        qc,
-        basis_gates=["rx", "ry", "rz", "cz"],
-        optimization_level=0,
-    )
+def swap_via_cz(a: int, b: int):
+    """Return gate list implementing ``SWAP(a, b)`` using CZ gates."""
+
     gates = []
-    for inst in tc.data:
-        name = inst.operation.name
-        qargs = [tc.find_bit(q).index for q in inst.qubits]
-        params = inst.operation.params
-        if name == "rx":
-            gates.append(RX(qargs[0], params[0]))
-        elif name == "ry":
-            gates.append(RY(qargs[0], params[0]))
-        elif name == "rz":
-            gates.append(RZ(qargs[0], params[0]))
-        elif name == "cz":
-            gates.append(CZ(*qargs))
+    gates += _cnot_via_cz(a, b)
+    gates += _cnot_via_cz(b, a)
+    gates += _cnot_via_cz(a, b)
     return gates
